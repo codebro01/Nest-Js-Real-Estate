@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { usersTable, User, NewUser } from '@src/db/schema';
+import { usersTable, User, UserType } from '@src/db/schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SupabaseClient } from '@supabase/supabase-js';
 
@@ -11,14 +11,7 @@ export class UserRepository {
     @Inject('SUPABASE_CLIENT') private supabase: SupabaseClient,
   ) {}
 
-  async createUser(data: {
-    firstname: string;
-    lastname: string;
-    age: number;
-    username: string;
-    email: string;
-    password: string;
-  }): Promise<User> {
+  async createUser(data: UserType & {password: string}): Promise<User> {
     const { email, password, firstname, lastname, age, username } = data;
 
     // Step 1: create in Supabase Auth
@@ -27,9 +20,12 @@ export class UserRepository {
       password,
     });
 
-    if (error) {
-      throw new Error(error.message); // Or better: map to NestJS HttpException
-    }
+  if (error) {
+    console.error('Supabase Auth Error:', error);
+    throw new Error(
+      `Supabase Auth Error: ${error.message} (Code: ${error.code})`,
+    );
+  }
 
     const userId = authData.user?.id; // Supabase Auth UUID
 
@@ -47,5 +43,14 @@ export class UserRepository {
       .returning()) as User[];
 
     return users[0];
+  }
+
+  async loginUser(data: { email: string; password: string }) {
+    const user = await this.supabase.auth.signInWithPassword({
+      email: data.email,
+      password: data.password,
+    });
+
+    return user;
   }
 }

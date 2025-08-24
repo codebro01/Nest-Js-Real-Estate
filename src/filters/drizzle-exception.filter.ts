@@ -17,6 +17,7 @@ import { Request, Response } from 'express';
 @Catch()
 export class DrizzleExceptionFilter implements ExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
+    console.log(exception);
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
@@ -31,7 +32,7 @@ export class DrizzleExceptionFilter implements ExceptionFilter {
     if (exception.cause?.code === '23505') {
       return response.status(HttpStatus.BAD_REQUEST).json({
         statusCode: HttpStatus.BAD_REQUEST,
-        message: 'Email is already taken, please use another one!!!',
+        message: exception.cause.detail,
         error: exception.cause.message,
         timestamp: new Date().toISOString(),
         path: request.url,
@@ -63,7 +64,7 @@ export class DrizzleExceptionFilter implements ExceptionFilter {
     //! Default fallback
     return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: exception.message || 'Unexpected database error',
+      message: exception?.response?.message[0] || exception?.message || 'Unexpected database error',
       timestamp: new Date().toISOString(),
       path: request.url,
     });

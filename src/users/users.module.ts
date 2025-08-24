@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UserController } from './users.controller';
 import { UserService } from './users.service';
-import { UserRepository } from '@src/users/repository/repository';
+import { UserRepository } from '@src/users/repository/user.repository';
 import { DbModule } from '@src/db/db.module';
 import { JwtService } from '@nestjs/jwt';
 import { SupabaseModule } from '@src/supabase/supabase.module';

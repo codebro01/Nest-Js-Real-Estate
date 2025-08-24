@@ -21,6 +21,8 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false, 
+    "strictPropertyInitialization": false, 
+    "useDefineForClassFields": false, 
     "paths":{
     "@src/*": ["./src/*"],
     "@generated/prisma": ["generated/prisma"],
