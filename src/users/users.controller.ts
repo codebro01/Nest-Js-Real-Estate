@@ -22,12 +22,13 @@ export class UserController {
     console.log(body);
     return this.usersService.createUser(body);
   }
-  
 
-  //   @Get()
-  //   getAllUsers() {
-  //     return this.usersService.getAllUsers();
-  //   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('get-all-users')
+  getAllUsers() {
+    return this.usersService.getAllUsers();
+  }
 
   //   @Get(':id')
   //   getUserById(@Param('id') id: string) {

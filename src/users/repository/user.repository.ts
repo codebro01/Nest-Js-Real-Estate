@@ -45,5 +45,9 @@ export class UserRepository {
     return users[0];
   }
 
+  async getAllUsers(): Promise<User[]> {
+    const users = await this.DbProvider.select().from(usersTable);
 
+    return users;
+  }
 }
