@@ -12,6 +12,7 @@ export class UserService {
     age: number;
     username: string;
     email: string;
+    // password: string;
   }): Promise<NewUser> {
     return await this.userRepository.createUser(data);
   }

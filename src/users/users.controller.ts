@@ -6,14 +6,17 @@ import {
   Param,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { UserService } from '@src/users/users.service';
+import { JwtAuthGuard } from '@src/auth/guards/jwt-auth.guard';
 
 @Controller('/api/v1/users')
 export class UserController {
   constructor(private readonly usersService: UserService) {}
 
   @Post()
+  // @UseGuards(JwtAuthGuard)
   createUser(@Body() body: any) {
     console.log(body);
     return this.usersService.createUser(body);
