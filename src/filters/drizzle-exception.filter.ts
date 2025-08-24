@@ -64,7 +64,11 @@ export class DrizzleExceptionFilter implements ExceptionFilter {
     //! Default fallback
     return response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: exception?.response?.message[0] || exception?.message || 'Unexpected database error',
+      message:
+        exception?.response?.message ||
+        exception?.response?.message[0] ||
+        exception?.message ||
+        'Unexpected database error',
       timestamp: new Date().toISOString(),
       path: request.url,
     });

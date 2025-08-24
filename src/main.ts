@@ -7,6 +7,7 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.use(cookieParser());
+  app.setGlobalPrefix('api/v1');
   app.useGlobalFilters(new DrizzleExceptionFilter());
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),

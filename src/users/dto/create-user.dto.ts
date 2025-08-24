@@ -27,6 +27,7 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
+  @IsNotEmpty()
   @IsString()
   @MinLength(6) // enforce strong-ish password
   password: string;

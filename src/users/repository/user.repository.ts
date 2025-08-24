@@ -11,7 +11,7 @@ export class UserRepository {
     @Inject('SUPABASE_CLIENT') private supabase: SupabaseClient,
   ) {}
 
-  async createUser(data: UserType & {password: string}): Promise<User> {
+  async createUser(data: UserType & { password: string }): Promise<User> {
     const { email, password, firstname, lastname, age, username } = data;
 
     // Step 1: create in Supabase Auth
@@ -20,12 +20,12 @@ export class UserRepository {
       password,
     });
 
-  if (error) {
-    console.error('Supabase Auth Error:', error);
-    throw new Error(
-      `Supabase Auth Error: ${error.message} (Code: ${error.code})`,
-    );
-  }
+    if (error) {
+      console.error('Supabase Auth Error:', error);
+      throw new Error(
+        `Supabase Auth Error: ${error.message} (Code: ${error.code})`,
+      );
+    }
 
     const userId = authData.user?.id; // Supabase Auth UUID
 
@@ -45,12 +45,5 @@ export class UserRepository {
     return users[0];
   }
 
-  async loginUser(data: { email: string; password: string }) {
-    const user = await this.supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    });
 
-    return user;
-  }
 }
