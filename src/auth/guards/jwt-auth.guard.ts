@@ -52,6 +52,8 @@ export class JwtAuthGuard implements CanActivate {
           refresh_token,
         });
 
+        console.log(refresh_token, access_token)
+
       if (refreshTokenError || !data.session) {
         throw new UnauthorizedException('Invalid refresh token');
       }

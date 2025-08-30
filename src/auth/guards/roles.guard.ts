@@ -5,6 +5,15 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { Request } from 'express';
+
+interface ExtendedReq extends Request {
+  user: {
+    user_metadata: {
+      custom_role: string;
+    };
+  };
+}
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -18,12 +27,12 @@ export class RolesGuard implements CanActivate {
 
     if (!roles) return false; // no roles means close access
 
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<ExtendedReq>();
     const user = request.user;
 
     if (!user) throw new ForbiddenException('No user found');
-
-    if (!roles.includes(user.role)) {
+    console.log(user)
+    if (!roles.includes(user.user_metadata.custom_role)) {
       throw new ForbiddenException('Insufficient permissions');
     }
 

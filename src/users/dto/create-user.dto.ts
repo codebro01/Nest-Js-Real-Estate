@@ -5,6 +5,7 @@ import {
   MinLength,
   IsInt,
   Min,
+  IsDate
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -16,9 +17,8 @@ export class CreateUserDto {
   @IsNotEmpty()
   lastname: string;
 
-  @IsInt()
-  @Min(1) // must be at least 1
-  age: number;
+  @IsString()
+  dateOfBirth: string;
 
   @IsString()
   @IsNotEmpty()
@@ -31,4 +31,10 @@ export class CreateUserDto {
   @IsString()
   @MinLength(6) // enforce strong-ish password
   password: string;
+
+  @IsNotEmpty()
+  @IsString()
+  role: string;
+
+
 }
