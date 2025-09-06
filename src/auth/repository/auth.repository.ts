@@ -3,6 +3,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { usersTable } from '@src/db';
@@ -12,6 +13,16 @@ import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { jwtConstants } from '../jwtContants';
 import { JwtService } from '@nestjs/jwt';
+import { Response, Request } from 'express';
+
+interface customRequest extends Request {
+  user: {
+    id: string, 
+    email: string, 
+    role: string
+  }
+} 
+
 
 @Injectable()
 export class AuthRepository {
@@ -39,7 +50,7 @@ export class AuthRepository {
         'Bad credentials, Please check email and password',
       );
 
-    const payload = { id: user.id, email: user.email };
+    const payload = { id: user.id, email: user.email, role: user.role };
 
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: jwtConstants.accessTokenSecret,
@@ -57,12 +68,17 @@ export class AuthRepository {
       .where(eq(usersTable.id, user.id));
 
     if (!updateUserToken) throw new InternalServerErrorException();
-    const { password:pwd, ...userSafe } = user;
-    return { userSafe, accessToken, refreshToken };
+    return { user, accessToken, refreshToken };
   }
 
-  async handleGoogleCallback(code: string) {
-    // Step 2: exchange the code Google gave us for a Supabase session
-    return await this.supabase.auth.exchangeCodeForSession(code);
+
+  
+  async logoutUser(res: Response, req: customRequest) {
+    const user = req.user;
+    if(!user) throw new NotFoundException('No user payload, no user is logged in')
+    console.log(user)
+    await this.DbProvider.update(usersTable).set({refreshToken: null}).where(eq(usersTable.id, user.id));
+    res.clearCookie('access_token');
+    res.clearCookie('refresh_token');
   }
 }

@@ -10,9 +10,8 @@ export class AuthService {
     return this.authRepository.loginUser(data);
   }
 
-
-  async handleGoogleCallback(code: string) {
-    return await this.authRepository.handleGoogleCallback(code);
+  async logoutUser(res, req) {
+    return await this.authRepository.logoutUser(res, req);
   }
 
   generateRandomPassword(length = 12): string {

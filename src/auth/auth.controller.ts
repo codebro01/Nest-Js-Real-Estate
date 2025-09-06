@@ -3,9 +3,11 @@ import {
   Post,
   Body,
   Res,
+  Req, 
   HttpStatus,
   Get,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from '@src/auth/auth.service';
 import { LoginUserDto } from '@src/auth/dto/login-user.dto';
@@ -15,7 +17,13 @@ import qs from 'qs';
 import axios from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import { UserService } from '@src/users/users.service';
+import omit from 'lodash.omit'
+import { JwtAuthGuard } from '@src/auth/guards/jwt-auth.guard';
+import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 
+
+
+@ApiTags('auth') // Groups your endpoints
 @Controller('auth')
 export class AuthController {
   private clientId = process.env.GOOGLE_CLIENT_ID;
@@ -26,10 +34,12 @@ export class AuthController {
     private readonly userService: UserService,
   ) {}
   @Post('signin')
+  @ApiResponse({ status: 201, description: 'User created successfully.' })
+  @ApiResponse({ status: 400, description: 'Bad Request.' })
   async loginUser(@Body() body: LoginUserDto, @Res() res: Response) {
-    const { userSafe:user, accessToken, refreshToken } = await this.authService.loginUser(body);
+    const { user, accessToken, refreshToken } =
+      await this.authService.loginUser(body);
 
-   
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: true,
@@ -43,7 +53,11 @@ export class AuthController {
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30d
     });
 
-    res.status(HttpStatus.ACCEPTED).json({ user, accessToken, refreshToken });
+    const safeUser = omit(user, ['password', 'refreshToken']);
+
+    res
+      .status(HttpStatus.ACCEPTED)
+      .json({ user: safeUser, accessToken, refreshToken });
   }
 
   @Get('google')
@@ -110,40 +124,17 @@ export class AuthController {
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30d
     });
 
-    res.status(HttpStatus.ACCEPTED).json({ user, accessToken, refreshToken });
+    const safeUser = omit(user, ['password', 'refreshToken']);
 
-    res.json({ user, refreshToken, accessToken });
+    res
+      .status(HttpStatus.ACCEPTED)
+      .json({ user: safeUser, accessToken, refreshToken });
+  }
+  @UseGuards(JwtAuthGuard)
+  @Get('logout')
+  async logoutUser(@Res() res: Response, @Req() req: Request) {
+    await this.authService.logoutUser(res, req);
 
-    //! decode jwt
-
-    // Generate your own JWT session for the user (like your email/password login)
-    // const myAppToken = await this.jwtService.signAsync({ email: decoded.email, sub: decoded.sub }, {
-    //   secret: jwtConstants.accessTokenSecret,
-    //   expiresIn: '1h'
-    // });
-
-    // // Set cookies
-    // res.cookie('access_token', myAppToken, {
-    //   httpOnly: true,
-    //   maxAge: expires_in * 1000,
-    // });
-    // if (refresh_token) {
-    //   res.cookie('refresh_token', refresh_token, {
-    //     httpOnly: true,
-    //     maxAge: 30 * 24 * 60 * 60 * 1000,
-    //   });
-    // }
-
-    // res.redirect('http://localhost:3000/dashboard'); // frontend route
+    res.status(HttpStatus.OK).json({ message: 'Logout Successful' });
   }
 }
-
-// @Get('callback')
-// async googleCallback(@Res() res: Response) {
-//   // After Google redirects back to you
-//   // Supabase sets the session automatically in query/cookie
-//   // For simplicity, you can just send success here
-//   return res
-//     .status(HttpStatus.OK)
-//     .json({ message: 'Google login successful' });
-// }

@@ -9,9 +9,7 @@ import { Request } from 'express';
 
 interface ExtendedReq extends Request {
   user: {
-    user_metadata: {
-      custom_role: string;
-    };
+    role: string
   };
 }
 
@@ -32,7 +30,7 @@ export class RolesGuard implements CanActivate {
 
     if (!user) throw new ForbiddenException('No user found');
     console.log(user)
-    if (!roles.includes(user.user_metadata.custom_role)) {
+    if (!roles.includes(user.role)) {
       throw new ForbiddenException('Insufficient permissions');
     }
 

@@ -1,4 +1,4 @@
-import { Injectable, Inject, BadRequestException } from '@nestjs/common';
+import { Injectable, Inject, BadRequestException,InternalServerErrorException } from '@nestjs/common';
 import { usersTable, UserType } from '@src/db/users';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -6,8 +6,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { eq } from 'drizzle-orm';
 import { jwtConstants } from '@src/auth/jwtContants';
-import { InternalServerErrorException } from '@nestjs/common';
-// import { InternalServerErrorException } from '@nestjs/common';
+// import PasswordValidator from 'password-validator';
 
 @Injectable()
 export class UserRepository {
@@ -35,7 +34,7 @@ export class UserRepository {
           .from(usersTable)
           .where(eq(usersTable.email, email));
         if (user) {
-          const payload = { id: user.id, email: user.email };
+          const payload = { id: user.id, email: user.email, role: user.role };
 
           const accessToken = await this.jwtService.signAsync(payload, {
             secret: jwtConstants.accessTokenSecret,
@@ -68,7 +67,7 @@ export class UserRepository {
 
       if (!user.id) throw new Error('User ID is missing');
 
-      const payload = { id: user.id, email: user.email };
+      const payload = { id: user.id, email: user.email, role: user.role };
 
       const accessToken = await this.jwtService.signAsync(payload, {
         secret: jwtConstants.accessTokenSecret,

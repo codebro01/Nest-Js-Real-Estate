@@ -8,12 +8,17 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
 import { SupabaseClient } from '@supabase/supabase-js';
+import { jwtConstants } from '@src/auth/jwtContants';
+import { usersTable } from '@src/db';
+import { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { eq } from 'drizzle-orm';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private jwtService: JwtService,
-    @Inject('SUPABASE_CLIENT') private supabase: SupabaseClient,
+    @Inject('DB')
+    private readonly DbProvider: NodePgDatabase<typeof import('@src/db/users')>,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -32,34 +37,49 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const { data, error } = await this.supabase.auth.getUser(access_token);
-      if (error) throw new UnauthorizedException(error.message);
+      const token = await this.jwtService.verifyAsync(access_token, {
+        secret: jwtConstants.accessTokenSecret,
+      });
+      if (!token)
+        throw new UnauthorizedException(
+          'Could not verify token, Unauthorization error',
+        );
 
       // const payload = this.jwtService.verify(token); // verify with secret
-      request['user'] = data.user; // attach user to request
+      request['user'] = token; // attach user to request
       return true;
     } catch (error) {
-      // console.log(error);
+      console.log(error);
       if (!refresh_token) {
-        response.redirect('/signin')
+        response.redirect('/signin');
         throw new UnauthorizedException(
           'Access token expired and no refresh token provided',
         );
-
       }
-      const { data, error: refreshTokenError } =
-        await this.supabase.auth.refreshSession({
-          refresh_token,
-        });
+      const token = await this.jwtService.verifyAsync(refresh_token, {
+        secret: jwtConstants.accessTokenSecret,
+      });
 
-        console.log(refresh_token, access_token)
+      console.log(refresh_token, access_token);
 
-      if (refreshTokenError || !data.session) {
+      if (!token) {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-      const newAccessToken = data.session.access_token;
-      const newRefreshToken = data.session.refresh_token;
+      const { email, id, role } = token;
+
+      const newAccessToken = await this.jwtService.signAsync(
+        { email, id, role },
+        {
+          secret: jwtConstants.accessTokenSecret,
+        },
+      );
+      const newRefreshToken = await this.jwtService.signAsync(
+        { email, id, role },
+        {
+          secret: jwtConstants.refreshTokenSecret,
+        },
+      );
 
       response.cookie('access_token', newAccessToken, {
         httpOnly: true,
@@ -74,12 +94,20 @@ export class JwtAuthGuard implements CanActivate {
         maxAge: 1000 * 60 * 60 * 24 * 30, // 30d
       });
 
-      const { data: userData, error: superbaseGetUserError } =
-        await this.supabase.auth.getUser(newAccessToken);
-      if (superbaseGetUserError) throw new UnauthorizedException(error.message);
-
+      const newTokenUser = await this.jwtService.verifyAsync(newAccessToken, {
+        secret: jwtConstants.accessTokenSecret,
+      });
+      await this.DbProvider.update(usersTable)
+        .set({ refreshToken: newRefreshToken })
+        .where(eq(usersTable.id, id));
+      if (!newTokenUser) {
+        response.clearCookie('access_token')
+        response.clearCookie('refresh_token')
+        throw new UnauthorizedException('Token issue failed!!!');
+      }
+      console.log(newTokenUser);
       // const payload = this.jwtService.verify(token); // verify with secret
-      request['user'] = userData.user; // attach user to request
+      request['user'] = newTokenUser; // attach user to request
       return true;
     }
   }
