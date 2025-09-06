@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthRepository } from './repository/auth.repository';
 import { DbModule } from '@src/db/db.module';
 import { SupabaseModule } from '@src/supabase/supabase.module';
+import { UserModule } from '@src/users/users.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { SupabaseModule } from '@src/supabase/supabase.module';
     }),
     DbModule,
     SupabaseModule,
+    forwardRef(() => UserModule),
   ],
   controllers: [AuthController],
   providers: [AuthService, AuthRepository],

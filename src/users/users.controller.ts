@@ -25,8 +25,30 @@ export class UserController {
   // @UseGuards(JwtAuthGuard)
   async createUser(@Body() body: CreateUserDto, @Res() res: Response) {
 
-    const {authData, error} = await this.usersService.createUser(body);
+    const {user, accessToken, refreshToken} = await this.usersService.createUser(body);
+
+    console.log('authuser', user)
+      
+        res.cookie('access_token', accessToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 1000 * 60 * 60, // 1h
+        });
+        res.cookie('refresh_token', refreshToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+          maxAge: 1000 * 60 * 60 * 24 * 30, // 30d
+        });
     
+        res.status(HttpStatus.ACCEPTED).json({ user, accessToken, refreshToken });
+  
+  }
+  async updateUser(@Body() body: CreateUserDto, @Res() res: Response) {
+
+    const {authData, error} = await this.usersService.createUser(body);
+
     console.log('authData and error', error, authData)
         if (error || !authData?.session) {
           return res
@@ -50,6 +72,8 @@ export class UserController {
         res.status(HttpStatus.ACCEPTED).json({ user, session });
   
   }
+
+
 
 
   @UseGuards(JwtAuthGuard, RolesGuard)

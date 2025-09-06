@@ -8,7 +8,7 @@ export const SupabaseProvider = {
   useFactory: (config: ConfigService) => {
     return createClient(
       config.get<string>('SUPABASE_URL') ?? '',
-      config.get<string>('SUPABASE_ANON_KEY') ?? '',
+      config.get<string>('SUPABASE_SERVER_ROLE_KEY') ?? '',
     );
   },
 };

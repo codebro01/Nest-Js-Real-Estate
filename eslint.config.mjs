@@ -1,35 +1,43 @@
-// @ts-check
+// eslint.config.mjs
 import eslint from '@eslint/js';
-import globals from 'globals';
 import tseslint from 'typescript-eslint';
+import globals from 'globals';
 
 export default tseslint.config(
-  {
-    ignores: ['eslint.config.mjs'],
-  },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
+    ignores: [
+      'dist/**', // compiled files
+      'node_modules/**', // deps
+    ],
     languageOptions: {
       globals: {
         ...globals.node,
         ...globals.jest,
       },
-      sourceType: 'commonjs',
       parserOptions: {
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
-  },
-  {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-floating-promises': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
+      // Turn off noisy "unsafe" rules
+      '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+
+      // Allow `any` when needed
+      '@typescript-eslint/no-explicit-any': 'off',
+
+      // Disable promise-floating scream
+      '@typescript-eslint/no-floating-promises': 'off',
+
+      // Keep the essentials
+      'no-unused-vars': 'warn',
+      'no-console': 'off',
     },
   },
 );

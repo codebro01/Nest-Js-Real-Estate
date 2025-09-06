@@ -10,7 +10,7 @@ export class UserService {
     private readonly authRepository: AuthRepository,
   ) {}
 
-  async createUser(data: UserType & { password: string }) {
+  async createUser(data: UserType) {
     return await this.userRepository.createUser(data);
   }
 
