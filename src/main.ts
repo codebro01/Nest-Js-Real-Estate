@@ -31,6 +31,8 @@ async function bootstrap() {
   app.getHttpAdapter().get('/', (req, res) => {
     res.send({ status: 'ok', message: 'NestJS Real Estate API running' });
   });
+  app.getHttpAdapter().get('/favicon.ico', (req, res) => res.status(204).end());
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
