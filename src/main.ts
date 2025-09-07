@@ -26,6 +26,11 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/v1/api-docs', app, document); // localhost:3000/api-docs
+
+  // Root health check
+  app.getHttpAdapter().get('/', (req, res) => {
+    res.send({ status: 'ok', message: 'NestJS Real Estate API running' });
+  });
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
