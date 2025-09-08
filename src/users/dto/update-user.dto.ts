@@ -1,17 +1,43 @@
-import { IsString, IsNotEmpty, IsInt, Min } from 'class-validator';
+import {
+  IsString,
+  // IsEmail,
+  IsOptional,
+  IsBoolean,
+  IsDateString,
+} from 'class-validator';
 
 export class UpdateUserDto {
   @IsString()
-  firstname: string;
+  displayName?: string;
+
+  @IsBoolean()
+  emailVerified?: boolean;
 
   @IsString()
-  lastname: string;
-
-  @IsInt()
-  @Min(1) // must be at least 1
-  age: number;
+  firstname?: string;
 
   @IsString()
-  @IsNotEmpty()
-  username: string;
+  lastname?: string;
+
+  @IsDateString()
+  dateOfBirth?: string;
+
+  @IsString()
+  gender?: string;
+
+  @IsString()
+  dp?: string;
+
+  @IsString()
+  phone?: string;
+
+  @IsString()
+  authProvider?: string;
+
+  @IsBoolean()
+  isStageComplete?: boolean;
+
+  @IsOptional()
+  @IsString()
+  refreshToken?: string;
 }

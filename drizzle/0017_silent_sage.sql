@@ -1,0 +1,1 @@
+ALTER TABLE "usersPreferences" ALTER COLUMN "min_budget" SET DEFAULT 0;

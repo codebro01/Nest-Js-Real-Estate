@@ -67,35 +67,36 @@ export const usersTable = pgTable('users', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
-export const usersVerification = pgTable('usersVerification', {
+export const usersVerificationTable = pgTable('usersVerification', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   userId: uuid('user_id')
     .references(() => usersTable.id)
-    .notNull(),
+    .notNull().unique(),
 
   // !------------ Stage 2: Contact Info ----------------
-  idType: IDTypes('id_type'),
-  idFront: varchar('id_front', { length: 50 }),
-  idBack: varchar('id_back', { length: 50 }),
-  proofOfAddressType: proofOfAddressType('proof_of_address_type'),
-  isPhoneNumberVerified: boolean('is_phone_number_verified').default(false),
+  idType: IDTypes('id_type').notNull(),
+  idFront: varchar('id_front', { length: 50 }).notNull(),
+  idBack: varchar('id_back', { length: 50 }).notNull(),
+  proofOfAddressType: proofOfAddressType('proof_of_address_type').notNull(),
+  isPhoneNumberVerified: boolean('is_phone_number_verified')
+    .default(false)
+    .notNull(),
   address: text('address'),
   city: varchar('city', { length: 50 }),
   country: varchar('country', { length: 50 }),
   postalCode: varchar('postal_code', { length: 20 }),
-  isStageComplete: boolean('is_stage_complete').default(false),
+  isStageComplete: boolean('is_stage_complete').default(false).notNull(),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
-export const usersPreferences = pgTable('usersPreferences', {
+export const usersPreferencesTable = pgTable('usersPreferences', {
   id: uuid().defaultRandom().primaryKey().notNull(),
   userId: uuid('user_id')
     .references(() => usersTable.id)
-    .notNull(),
+    .notNull().unique(),
   propertyType: propertyType('property_type').array().notNull(),
   minBudgetRange: integer('min_budget').default(0).notNull(),
-  maxBudgetRange: integer('min_budget').notNull(),
   preferredLocation: varchar('preferred_location').notNull(),
   numberOfBedrooms: varchar('number_of_bedrooms', { length: 50 }).array(),
   newPropertyAlert: boolean('new_property_alert').default(false),
@@ -119,7 +120,7 @@ export const usersPreferences = pgTable('usersPreferences', {
 });
 
 export type UserType = InferInsertModel<typeof usersTable>;
-export type UserVerificationInsertType = InferInsertModel<typeof usersVerification>;
-export type UserVerificationSelectType = InferSelectModel<typeof usersVerification>;
-export type usersPreferencesInsertType = InferInsertModel<typeof usersPreferences>;
-export type usersPreferencesSelectType = InferSelectModel<typeof usersPreferences>;
+export type UserVerificationInsertType = InferInsertModel<typeof usersVerificationTable>;
+export type UserVerificationSelectType = InferSelectModel<typeof usersVerificationTable>;
+export type usersPreferencesInsertType = InferInsertModel<typeof usersPreferencesTable>;
+export type usersPreferencesSelectType = InferSelectModel<typeof usersPreferencesTable>;

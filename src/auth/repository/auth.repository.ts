@@ -17,12 +17,11 @@ import { Response, Request } from 'express';
 
 interface customRequest extends Request {
   user: {
-    id: string, 
-    email: string, 
-    role: string
-  }
-} 
-
+    id: string;
+    email: string;
+    role: string;
+  };
+}
 
 @Injectable()
 export class AuthRepository {
@@ -71,13 +70,14 @@ export class AuthRepository {
     return { user, accessToken, refreshToken };
   }
 
-
-  
   async logoutUser(res: Response, req: customRequest) {
     const user = req.user;
-    if(!user) throw new NotFoundException('No user payload, no user is logged in')
-    console.log(user)
-    await this.DbProvider.update(usersTable).set({refreshToken: null}).where(eq(usersTable.id, user.id));
+    if (!user)
+      throw new NotFoundException('No user payload, no user is logged in');
+    console.log(user);
+    await this.DbProvider.update(usersTable)
+      .set({ refreshToken: null })
+      .where(eq(usersTable.id, user.id));
     res.clearCookie('access_token');
     res.clearCookie('refresh_token');
   }

@@ -1,5 +1,19 @@
-import { Injectable, Inject, BadRequestException,InternalServerErrorException } from '@nestjs/common';
-import { usersTable, UserType } from '@src/db/users';
+import {
+  Injectable,
+  Inject,
+  BadRequestException,
+  InternalServerErrorException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  usersTable,
+  usersPreferencesTable,
+  usersVerificationTable,
+  UserType,
+  usersPreferencesInsertType,
+  UserVerificationInsertType,
+} from '@src/db/users';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { JwtService } from '@nestjs/jwt';
@@ -20,6 +34,8 @@ export class UserRepository {
     this.supabase = supabase;
   }
 
+  // ! create user here
+
   async createUser(
     data: Partial<UserType> & Pick<UserType, 'email' | 'password'>,
   ): Promise<any> {
@@ -28,6 +44,8 @@ export class UserRepository {
       if (!email || !password)
         throw new BadRequestException('Please email and password is required');
       const hashedPwd = await bcrypt.hash(password, 10);
+
+      // !check is google user is already in db before signing up
 
       if (data.authProvider === 'google') {
         const [user] = await this.DbProvider.select()
@@ -56,6 +74,15 @@ export class UserRepository {
         }
       }
 
+
+      //! check if email provided has been used
+
+      const isEmailUsed = await this.DbProvider.select({email: usersTable.email}).from(usersTable).where(eq(usersTable.email, email));
+      console.log(isEmailUsed);
+      if(isEmailUsed.length > 0) throw new ConflictException('Email already used, please use another email!')
+
+      //! create user here if email has not been used
+
       const [user]: Partial<UserType>[] = (await this.DbProvider.insert(
         usersTable,
       )
@@ -65,7 +92,7 @@ export class UserRepository {
         })
         .returning()) as UserType[];
 
-      if (!user.id) throw new Error('User ID is missing');
+      if (!user) throw new InternalServerErrorException('Could not create user, please try again');
 
       const payload = { id: user.id, email: user.email, role: user.role };
 
@@ -82,7 +109,7 @@ export class UserRepository {
 
       const updateUserToken = await this.DbProvider.update(usersTable)
         .set({ refreshToken: hashedRefreshToken })
-        .where(eq(usersTable.id, user.id));
+        .where(eq(usersTable.id, user.id!));
 
       if (!updateUserToken) throw new InternalServerErrorException();
       return { user, accessToken, refreshToken };
@@ -98,5 +125,75 @@ export class UserRepository {
   async getAllUsers(): Promise<UserType[]> {
     const users = await this.DbProvider.select().from(usersTable);
     return users;
+  }
+
+  async updateUser(user, data: Omit<UserType, 'email' | 'password'>) {
+    console.log('user', user)
+    if (!data) throw new BadRequestException('Data not provided for update!');
+    const [isUserExist] = await this.DbProvider.select({id: usersTable.id}).from(usersTable).where(eq(usersTable.id, user.id))
+    
+    if(!isUserExist) throw new NotFoundException('No user found');
+    console.log(isUserExist);
+    const updatedUser = await this.DbProvider.update(usersTable)
+      .set(data)
+      .where(eq(usersTable.id, user.id))
+      .returning();
+    if (!updatedUser)
+      throw new InternalServerErrorException(
+        'An error occurred while updating the user, please try again',
+      );
+      console.log('updatedUser', updatedUser)
+    return { updatedUser };
+  }
+  async updateUserVerification(
+    user,
+    data: Omit<UserVerificationInsertType, 'userId'>,
+  ) {
+    if (!data) {
+      throw new BadRequestException('Data not provided for update!');
+    }
+
+    const result = await this.DbProvider.insert(usersVerificationTable)
+      .values({
+        ...data,
+        userId: user.id,
+      })
+      .onConflictDoUpdate({
+        target: usersVerificationTable.userId, // the unique constraint / column to match on
+        set: {
+          ...data,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    if (!result.length) {
+      throw new InternalServerErrorException(
+        'An error occurred while upserting the user verification, please try again',
+      );
+    }
+
+    return { data: result[0] };
+  }
+  async updateUserPreferences(
+    user,
+    data: Omit<usersPreferencesInsertType, 'userId'>,
+  ) {
+    if (!data) throw new BadRequestException('Data not provided for update!');
+    const updateUserPreferences = await this.DbProvider.insert(
+      usersPreferencesTable,
+    )
+      .values({ ...data, userId: user.id })
+      .onConflictDoUpdate({
+        target: usersPreferencesTable.userId,
+        set: { ...data, updatedAt: new Date() },
+      })
+      .returning();
+
+    if (!updateUserPreferences)
+      throw new InternalServerErrorException(
+        'An error occurred while updating the user, please try again',
+      );
+    return { updateUserPreferences };
   }
 }

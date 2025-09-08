@@ -11,7 +11,7 @@ import { SupabaseClient } from '@supabase/supabase-js';
 import { jwtConstants } from '@src/auth/jwtContants';
 import { usersTable } from '@src/db';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
@@ -101,11 +101,17 @@ export class JwtAuthGuard implements CanActivate {
         .set({ refreshToken: newRefreshToken })
         .where(eq(usersTable.id, id));
       if (!newTokenUser) {
-        response.clearCookie('access_token')
-        response.clearCookie('refresh_token')
+        response.clearCookie('access_token');
+        response.clearCookie('refresh_token');
         throw new UnauthorizedException('Token issue failed!!!');
       }
       console.log(newTokenUser);
+      const tokenUser = newTokenUser || token
+      // After verifying JWT in NestJS
+    await this.DbProvider.execute(
+      sql`SET app.current_user_role = ${tokenUser.role}`,
+    );
+
       // const payload = this.jwtService.verify(token); // verify with secret
       request['user'] = newTokenUser; // attach user to request
       return true;

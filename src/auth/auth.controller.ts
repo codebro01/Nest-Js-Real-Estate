@@ -19,7 +19,7 @@ import { jwtDecode } from 'jwt-decode';
 import { UserService } from '@src/users/users.service';
 import omit from 'lodash.omit'
 import { JwtAuthGuard } from '@src/auth/guards/jwt-auth.guard';
-import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiResponse } from '@nestjs/swagger';
 
 
 
@@ -27,12 +27,17 @@ import { ApiTags, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 @Controller('auth')
 export class AuthController {
   private clientId = process.env.GOOGLE_CLIENT_ID;
-  private redirectUri = 'http://localhost:3000/api/v1/auth/google/callback';
+  private redirectUri =
+    process.env.NODE_ENV === 'production'
+      ? `${process.env.SERVER_URI}/api/v1/auth/google/callback`
+      : 'http://localhost:3000/api/v1/auth/google/callback';
   constructor(
     private readonly authService: AuthService,
     private jwtService: JwtService,
     private readonly userService: UserService,
   ) {}
+
+  // ! local signin (password and email)
   @Post('signin')
   @ApiResponse({ status: 201, description: 'User created successfully.' })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
@@ -60,6 +65,8 @@ export class AuthController {
       .json({ user: safeUser, accessToken, refreshToken });
   }
 
+  // ! call google api for sign in or signup with google
+
   @Get('google')
   googleLogin(@Res() res: Response) {
     const scope = ['openid', 'email', 'profile'].join(' ');
@@ -77,6 +84,8 @@ export class AuthController {
     res.redirect(googleUrl);
   }
 
+  // ! google callback  for signin or signup (this callback returns the user identity from google)
+
   @Get('google/callback')
   async googleCallback(@Query('code') code: string, @Res() res: Response) {
     const { data } = await axios.post(
@@ -85,7 +94,10 @@ export class AuthController {
         code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: 'http://localhost:3000/api/v1/auth/google/callback',
+        redirect_uri:
+          process.env.NODE_ENV === 'production'
+            ? `${process.env.SERVER_URI}/api/v1/auth/google/callback`
+            : 'http://localhost:3000/api/v1/auth/google/callback',
         grant_type: 'authorization_code',
       }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } },

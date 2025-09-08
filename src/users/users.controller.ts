@@ -1,32 +1,37 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
-  Param,
   Post,
-  Put,
   UseGuards,
   Res,
   HttpStatus,
+  Req,
 } from '@nestjs/common';
 import { UserService } from '@src/users/users.service';
 import { JwtAuthGuard } from '@src/auth/guards/jwt-auth.guard';
-import { CreateUserDto } from '@src/users/dto/create-user.dto';
 import { RolesGuard } from '@src/auth/guards/roles.guard';
 import { Roles } from '@src/auth/decorators/roles.decorators';
 import type { Response } from 'express';
+import {
+  UpdateUserDto,
+  UpdateUserPreferencesDto,
+  UpdateUserVerificationDto,
+  CreateUserDto,
+} from '@src/users/dto/index.dto';
+
 import omit from 'lodash.omit';
 
 @Controller('users')
 export class UserController {
-  constructor(private readonly usersService: UserService) {}
+  constructor(private readonly userService: UserService) {}
 
+  // ! create users
   @Post('signup')
   // @UseGuards(JwtAuthGuard)
   async createUser(@Body() body: CreateUserDto, @Res() res: Response) {
     const { user, accessToken, refreshToken } =
-      await this.usersService.createUser(body);
+      await this.userService.createUser(body);
 
     res.cookie('access_token', accessToken, {
       httpOnly: true,
@@ -41,56 +46,39 @@ export class UserController {
       maxAge: 1000 * 60 * 60 * 24 * 30, // 30d
     });
 
-    const safeUser = omit(user, ['password', 'refreshToken'])
+    const safeUser = omit(user, ['password', 'refreshToken']);
 
-    res.status(HttpStatus.ACCEPTED).json({user:safeUser, accessToken, refreshToken });
-
-  }
-  async updateUser(@Body() body: CreateUserDto, @Res() res: Response) {
-    const { authData, error } = await this.usersService.createUser(body);
-
-    console.log('authData and error', error, authData);
-    if (error || !authData?.session) {
-      return res
-        .status(HttpStatus.UNAUTHORIZED)
-        .json({ message: 'Error creating user, Please try again' });
-    }
-    const { session, user } = authData;
-    res.cookie('access_token', session.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: 1000 * 60 * 60, // 1h
-    });
-    res.cookie('refresh_token', session.refresh_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: 1000 * 60 * 60 * 24 * 30, // 30d
-    });
-
-    res.status(HttpStatus.ACCEPTED).json({ user, session });
+    res
+      .status(HttpStatus.ACCEPTED)
+      .json({ user: safeUser, accessToken, refreshToken });
   }
 
+  //! get all users in db
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Get('get-all-users')
   getAllUsers() {
-    return this.usersService.getAllUsers();
+    return this.userService.getAllUsers();
   }
 
-  //   @Get(':id')
-  //   getUserById(@Param('id') id: string) {
-  //     return this.usersService.getUserById(id);
-  //   }
+  // ! update user basic information
+  @UseGuards(JwtAuthGuard)
+  @Post('/update-user-basic-info')
+  updateUsers(@Req() req, @Body() body: UpdateUserDto) {
+    return this.userService.updateUser(req.user, body);
+  }
 
-  //   @Put(':id')
-  //   updateUser(@Param('id') id: string, @Body() body: any) {
-  //     return this.usersService.updateUser(id, body);
-  //   }
+  // ! update user verification
+  @UseGuards(JwtAuthGuard)
+  @Post('update-user-verification')
+  updateUserVerifications(@Req() req, @Body() body: UpdateUserVerificationDto) {
+    return this.userService.updateUserVerification(req.user, body);
+  }
 
-  //   @Delete(':id')
-  //   deleteUser(@Param('id') id: string) {
-  //     return this.usersService.deleteUser(id);
-  //   }
+  //! update user preferences
+  @UseGuards(JwtAuthGuard)
+  @Post('update-user-preferences')
+  updateUsersPreferences(@Req() req, @Body() body: UpdateUserPreferencesDto) {
+    return this.userService.updateUserPreferences(req.user, body);
+  }
 }

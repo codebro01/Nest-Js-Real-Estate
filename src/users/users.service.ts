@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository } from '@src/users/repository/user.repository';
-import { UserType } from '@src/db/users';
+import { UserType, usersPreferencesInsertType, UserVerificationInsertType } from '@src/db/users';
 import { AuthRepository } from '@src/auth/repository/auth.repository';
+
 
 @Injectable()
 export class UserService {
@@ -17,4 +18,15 @@ export class UserService {
   async getAllUsers() {
     return await this.userRepository.getAllUsers();
   }
+
+  async updateUser(user, data: Omit<UserType, 'password' | 'email'>) {
+    return await this.userRepository.updateUser(user, data);
+  }
+  async updateUserPreferences(user, data:Omit<usersPreferencesInsertType, 'userId'>) {
+    return await this.userRepository.updateUserPreferences(user, data);
+  }
+  async updateUserVerification(user, data:Omit<UserVerificationInsertType, 'userId'>) {
+    return await this.userRepository.updateUserVerification(user, data);
+  }
 }
+
