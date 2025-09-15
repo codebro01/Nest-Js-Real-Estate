@@ -75,8 +75,8 @@ export const usersVerificationTable = pgTable('usersVerification', {
 
   // !------------ Stage 2: Contact Info ----------------
   idType: IDTypes('id_type').notNull(),
-  idFront: varchar('id_front', { length: 50 }).notNull(),
-  idBack: varchar('id_back', { length: 50 }).notNull(),
+  idFront: text('id_front').notNull(),
+  idBack: text('id_back').notNull(),
   proofOfAddressType: proofOfAddressType('proof_of_address_type').notNull(),
   isPhoneNumberVerified: boolean('is_phone_number_verified')
     .default(false)

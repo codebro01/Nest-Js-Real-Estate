@@ -127,6 +127,13 @@
       "when": 1757323238814,
       "tag": "0017_silent_sage",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1757897269105,
+      "tag": "0018_glossy_arclight",
+      "breakpoints": true
     }
   ]
 }

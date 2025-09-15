@@ -10,6 +10,18 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+app.enableCors({
+  origin: [
+    'http://localhost:3000', // frontend dev
+    'http://localhost:5173', // Vite dev
+    'https://nest-js-real-estate-rema.onrender.com', // production frontend
+  ],
+  credentials: true, // allow cookies & auth headers
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type, Authorization',
+});
+
   app.use(cookieParser());
   app.setGlobalPrefix('api/v1');
   app.useGlobalFilters(new DrizzleExceptionFilter());
@@ -19,9 +31,11 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Real Estate API') // Title of your docs
-    .setDescription('Reap estate api') // Small description
+    .setDescription('Real estate api') // Small description
     .setVersion('1.0') // Version
     .addBearerAuth()
+    .addServer('http://localhost:3000', 'Local Dev')
+    .addServer('https://nest-js-real-estate-rema.onrender.com', 'Production')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

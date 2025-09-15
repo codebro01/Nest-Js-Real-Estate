@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request, Response } from 'express';
-import { SupabaseClient } from '@supabase/supabase-js';
 import { jwtConstants } from '@src/auth/jwtContants';
 import { usersTable } from '@src/db';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
