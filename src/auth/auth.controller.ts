@@ -70,7 +70,7 @@ export class AuthController {
   @Get('google')
   googleLogin(@Res() res: Response) {
     const scope = ['openid', 'email', 'profile'].join(' ');
-
+    // console.log(this.redirectUri, process.env.SERVER_URI);
     const params = qs.stringify({
       client_id: this.clientId,
       redirect_uri: this.redirectUri,
